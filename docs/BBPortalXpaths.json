@@ -1,0 +1,20 @@
+[
+    {
+		"Minhas financas": "/html/body/div[2]/div/div[2]/div[3]/div[1]/div[2]/ul/li[7]/a/div[1]",
+        "Extrato Multibanco": "/html/body/div[2]/div/div[2]/div[3]/div[1]/div[2]/ul/li[7]/a/div[3]/ul/li[1]/ul/li[2]/a",
+        "Checkbox Caixa": "/html/body/div[2]/div/div[3]/form/ul/li[5]/div/div/div[3]/div/div[1]/div[3]/input",
+        "Titulo Extrato Multibanco": "/html/body/div[2]/div/div[3]/form/ul/li[1]/ul/li[1]/div",
+        "Painel com Valores": "/html/body/div[2]/div/div[3]/form/ul/li[5]/div/div/div[5]/div[1]",
+		"Div dia": "/html/body/div[2]/div/div[3]/form/ul/li[5]/div/div/div[5]/div[1]/ul/li[{n}]/div/div/span",
+        "Lancamentos do dia": "/html/body/div[2]/div/div[3]/form/ul/li[5]/div/div/div[5]/div[1]/ul/li[{n}]/ul",
+        "Descricao lancamento": "/html/body/div[2]/div/div[3]/form/ul/li[5]/div/div/div[5]/div[1]/ul/li[{d}]/ul/li[{t}]/div[1]/div[2]/p[1]",
+        "Valor lancamento": "/html/body/div[2]/div/div[3]/form/ul/li[5]/div/div/div[5]/div[1]/ul/li[{d}]/ul/li[{t}]/div[2]/p[1]",
+        "Link detalhes lancamento": "/html/body/div[2]/div/div[3]/form/ul/li[5]/div/div/div[5]/div[1]/ul/li[{d}]/ul/li[{t}]/div[2]/img",
+        "Detalhes - hora": "/html/body/div[2]/div/div[3]/div/div[4]/p",
+		"Detalhes - comp.desc": "/html/body/div[2]/div/div[3]/div/div[3]/p",
+        "Detalhes - categoria": "/html/body/div[2]/div/div[3]/div/div[5]/div/div/p",
+        "Detalhes - subcategoria": "/html/body/div[2]/div/div[3]/div/div[5]/p",
+        "Detalhes - banco": "/html/body/div[2]/div/div[3]/div/div[7]/p[1]",
+		"Detalhes - voltar": "/html/body/div[2]/div/div[3]/div/div[1]/div/img"
+    }
+]
