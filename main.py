@@ -7,7 +7,6 @@ from selenium import webdriver
 from selenium.common import NoSuchElementException, StaleElementReferenceException, TimeoutException
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 import keyring
@@ -24,10 +23,14 @@ pd.set_option('display.max_columns', 10)
 log_filename = 'session_log_' + now.strftime("%Y%m%d%H%M%S") + '.csv'
 
 # Edge driver
-# from selenium.webdriver.edge.service import Service
-# service_obj = Service("/Users/YN557KV/AppData/Local/Programs/MSEdge Webdriver/msedgedriver")
-# driver = webdriver.Edge(service=service_obj)
-#
+from selenium.webdriver.edge.service import Service
+
+service_obj = Service("/Users/YN557KV/AppData/Local/Programs/MSEdge Webdriver/msedgedriver")
+driver = webdriver.Edge(service=service_obj)
+# Chrome driver
+# from selenium.webdriver.chrome.service import Service
+# service_obj = Service("C:/_Dev/chrome-webdriver/chromedriver.exe")
+# driver = webdriver.Chrome(service=service_obj)
 
 # Credentials
 servicename = "Login"
@@ -43,11 +46,8 @@ if keyring.get_password(servicename, username):
 TODAY = datetime.strftime(datetime.today(), "%d/%m/%Y")
 SEARCH_STRING = "cartões - fatura - extrato"
 
-# Chrome driver
-service_obj = Service("C:/_Dev/chrome-webdriver/chromedriver.exe")
-driver = webdriver.Chrome(service=service_obj)
-# 5 seconds is max timeout
-driver.implicitly_wait(7)
+# 3 seconds is max timeout
+driver.implicitly_wait(3)
 # explicit 10s wait
 wait_10s = WebDriverWait(driver, 10)
 driver.delete_all_cookies()
@@ -172,6 +172,15 @@ def readTransactions(paths):
         categoria = readElement(paths['Detalhes - categoria'])
         subcategoria = readElement(paths['Detalhes - subcategoria'])
         banco = readElement(paths['Detalhes - banco'])
+        
+        tipo = readElement(paths['Detalhes - TipoLancamento'])
+        if tipo == 'CONTA':
+            tipo = 'Debito'
+        elif tipo == 'CARTÃO':
+            tipo = 'Credito'
+        else:
+            tipo = 'Debito'
+            
         navigateToByClick(paths['Detalhes - voltar'])
 
         row_id = descricao.replace(' ', '') + "_" + valor.replace(',', '') + "_" + datetime.strftime(dataCompra,
@@ -184,7 +193,7 @@ def readTransactions(paths):
                                 'DataCompra': dataCompra,
                                 'DataLancamento': dataCompra,
                                 'Banco': banco,
-                                'TipoLancamento': 'Debito',
+                                'TipoLancamento': tipo,
                                 'Parcela': "0",
                                 'Parcelas': "0",
                                 'Categoria': categoria,
@@ -192,15 +201,16 @@ def readTransactions(paths):
                                 }, index=[0])
         df = pd.concat([df, new_row])
 
-        print("Row added: " + new_row.loc[0, 'ID'])
+        print("Row added: "+ diaMes + " | " + new_row.loc[0, 'ID'] + " | " + banco + " | " + tipo)
 
         # print("diaMes= "+diaMes+"\ndescricao= "+descricao+"\nvalor: "+valor+"\ndataCompra= "+dataCompra+"\ncategoria= "+categoria+"\nsubcategoria= "+subcategoria+"\nbanco= "+banco)
         # print("\n\n")
         transaction += 1
 
-    return df.reset_index(drop=True)
+    # return df.reset_index(drop=True)
+    return df.set_index('ID')
 
-    # Drive Functions
+# Drive Functions
 
 
 def readBase():
@@ -224,8 +234,40 @@ def driveAuthorize():
 
     gspread.authorize(credentials)
 
+def getDiffRows(df_base, df_trans):
+    dfNewRows = df_trans[ ~df_trans.index.isin(df_base.index) ]
+    return dfNewRows.reset_index()
 
+
+def appendNewRows(df_toappend):
+    gc = gspread.service_account(filename="C:\_Dev\BB\service_account.json")
+    sh = gc.open("Carteira RPA")
+    worksheet = sh.worksheet("BaseHistorica")
+    df_toappend['DataCompra'] = df_toappend['DataCompra'].dt.strftime('%d/%m/%Y %H:%M:%S')
+    df_toappend['DataLancamento'] = df_toappend['DataLancamento'].dt.strftime('%d/%m/%Y')
+    # col_list = worksheet.col_values(1)
+    # empty_row = len(col_list)
+    # worksheet.update(range_name='A' + str(empty_row), values=df_toappend.values.tolist())
+    worksheet.append_rows(values=df_toappend.values.tolist(), value_input_option="USER_ENTERED", insert_data_option='OVERWRITE', table_range='A1', include_values_in_response=True)
+
+
+def sortBase():
+    gc = gspread.service_account(filename="C:\_Dev\BB\service_account.json")
+    sh = gc.open("Carteira RPA")
+    worksheet = sh.worksheet("BaseHistorica")
+    worksheet.sort((5,'asc'), range='A2:L1000')
+
+
+def formatBase():
+    gc = gspread.service_account(filename="C:\_Dev\BB\service_account.json")
+    sh = gc.open("Carteira RPA")
+    worksheet = sh.worksheet("BaseHistorica")
+    worksheet.format("D:D", {"numberFormat": {"type": "CURRENCY"}})
+    worksheet.format("E:E", {"numberFormat": {"type": "DATE_TIME"}})
+    worksheet.format("F:F", {"numberFormat": {"type": "DATE", "pattern": "dd/MM/yyyy"}})
+    
 # Actions
+
 
 if __name__ == '__main__':
     xpathsFilepath = "C:\_Dev\BB\docs\BBPortalXpaths.json"
@@ -235,6 +277,9 @@ if __name__ == '__main__':
     loginBB()
     accessMultiStatement(xpaths)
     dfTransactions = readTransactions(xpaths)
+    dfNewRows = getDiffRows(dfBase, dfTransactions)
+    appendNewRows(dfNewRows)
+    sortBase()
 
 
     """
